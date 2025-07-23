@@ -1,36 +1,176 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ScanMonk - E-commerce Store Scanner
 
-## Getting Started
+A modern web application for scanning and analyzing e-commerce stores, with a focus on identifying Shopify-powered websites.
 
-First, run the development server:
+## Features
+
+- 🔍 **Real-time Domain Scanning**: Batch process domains to identify Shopify stores
+- 💾 **Database Persistence**: All results saved to PostgreSQL database
+- 🔄 **Background Processing**: Crawls continue running even after closing the browser
+- 📊 **Analytics Dashboard**: View statistics and export results
+- 🌙 **Dark Mode**: Full dark mode support
+- 📱 **Responsive Design**: Works on all devices
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React, TypeScript
+- **UI**: shadcn/ui, Tailwind CSS
+- **Database**: PostgreSQL with Prisma ORM
+- **Deployment**: Vercel
+- **Background Jobs**: Vercel Cron Jobs
+
+## Setup Instructions
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/BinaryBishup/scanmonk.git
+cd scanmonk
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Set up environment variables
+
+Create a `.env.local` file:
+
+```env
+# Database URL (PostgreSQL)
+DATABASE_URL="postgresql://user:password@host:port/database?sslmode=require"
+
+# For Vercel deployment
+POSTGRES_URL="postgresql://..."
+POSTGRES_PRISMA_URL="postgresql://..."
+POSTGRES_URL_NON_POOLING="postgresql://..."
+
+# Cron secret for background jobs
+CRON_SECRET="your-secret-key"
+
+# Base URL for production
+NEXT_PUBLIC_BASE_URL="https://your-domain.vercel.app"
+```
+
+### 4. Set up the database
+
+```bash
+# Generate Prisma client
+npx prisma generate
+
+# Run database migrations
+npx prisma migrate dev --name init
+
+# (Optional) Seed the database
+npx prisma db seed
+```
+
+### 5. Run the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database Options
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Option 1: Vercel Postgres (Recommended for Vercel deployment)
 
-## Learn More
+1. Go to your Vercel project dashboard
+2. Navigate to the "Storage" tab
+3. Click "Create Database" and select "Postgres"
+4. Copy the environment variables to your `.env.local`
 
-To learn more about Next.js, take a look at the following resources:
+### Option 2: Supabase
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Create a project at [supabase.com](https://supabase.com)
+2. Go to Settings > Database
+3. Copy the connection string
+4. Add to `.env.local`:
+   ```env
+   DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:6543/postgres?pgbouncer=true"
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Option 3: Local PostgreSQL
 
-## Deploy on Vercel
+```bash
+# Install PostgreSQL locally
+brew install postgresql # macOS
+sudo apt-get install postgresql # Ubuntu
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Create database
+createdb scanmonk
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Update .env.local
+DATABASE_URL="postgresql://localhost:5432/scanmonk"
+```
+
+## Deployment
+
+### Deploy to Vercel
+
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Add environment variables in Vercel dashboard:
+   - `DATABASE_URL`
+   - `CRON_SECRET`
+   - `NEXT_PUBLIC_BASE_URL`
+4. Deploy!
+
+### Setting up Cron Jobs
+
+The application includes a cron job that runs every 6 hours. To customize:
+
+1. Edit `vercel.json`:
+   ```json
+   {
+     "crons": [{
+       "path": "/api/cron/crawler",
+       "schedule": "0 */6 * * *"  // Runs every 6 hours
+     }]
+   }
+   ```
+
+2. Set `CRON_SECRET` in Vercel environment variables
+
+## API Endpoints
+
+- `POST /api/crawler` - Process domains
+- `GET /api/crawler/session` - List all sessions
+- `POST /api/crawler/session` - Create new session
+- `GET /api/crawler/session/[id]` - Get session details
+- `PATCH /api/crawler/session/[id]` - Update session status
+- `GET /api/cron/crawler` - Cron endpoint for scheduled crawls
+
+## Features in Detail
+
+### Crawler Page (`/crawler`)
+- Upload CSV or TXT files with domain lists
+- Real-time progress tracking
+- Export results as CSV
+- View previous sessions
+
+### Database Persistence
+- All crawl results saved to PostgreSQL
+- Sessions can be resumed later
+- Historical data analysis
+
+### Background Processing
+- Crawls continue running on the server
+- Real-time updates via polling
+- Automatic retry on failures
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License.

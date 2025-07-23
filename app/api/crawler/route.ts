@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 // Shopify detection patterns based on the Python crawler
 const SHOPIFY_HEADER_KEYS = ['x-shopify-stage', 'x-shopify-cache-status']
@@ -14,6 +15,8 @@ interface CrawlResult {
   isShopify: boolean
   timestamp: string
   status: 'success' | 'error'
+  errorMessage?: string
+  headers?: any
 }
 
 async function checkDomain(domain: string): Promise<CrawlResult> {
@@ -112,7 +115,7 @@ function extractBusinessName(html: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { domains, batchSize = 10 } = await request.json()
+    const { domains, batchSize = 10, sessionId } = await request.json()
     
     if (!domains || !Array.isArray(domains)) {
       return NextResponse.json({ error: 'Invalid domains array' }, { status: 400 })
@@ -127,6 +130,35 @@ export async function POST(request: NextRequest) {
       const batchResults = await Promise.all(batchPromises)
       results.push(...batchResults)
       
+      // Save results to database if sessionId is provided
+      if (sessionId) {
+        const dbResults = await Promise.all(
+          batchResults.map(result => 
+            prisma.crawlResult.create({
+              data: {
+                domain: result.domain,
+                businessName: result.businessName || null,
+                isShopify: result.isShopify,
+                status: result.status,
+                errorMessage: result.errorMessage || null,
+                headers: result.headers || null,
+                sessionId: sessionId
+              }
+            })
+          )
+        )
+        
+        // Update session stats
+        const shopifyCount = batchResults.filter(r => r.isShopify).length
+        await prisma.crawlSession.update({
+          where: { id: sessionId },
+          data: {
+            processedDomains: { increment: batchResults.length },
+            shopifyDomains: { increment: shopifyCount }
+          }
+        })
+      }
+      
       // Add a small delay between batches to avoid rate limiting
       if (i + batchSize < domains.length) {
         await new Promise(resolve => setTimeout(resolve, 100))
@@ -135,6 +167,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ results })
   } catch (error) {
+    console.error('Error processing domains:', error)
     return NextResponse.json({ error: 'Failed to process domains' }, { status: 500 })
   }
 }

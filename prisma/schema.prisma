@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model CrawlSession {
+  id              String          @id @default(cuid())
+  name            String?
+  totalDomains    Int
+  processedDomains Int            @default(0)
+  shopifyDomains  Int             @default(0)
+  status          String          @default("pending") // pending, running, completed, stopped
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  results         CrawlResult[]
+}
+
+model CrawlResult {
+  id              String          @id @default(cuid())
+  domain          String
+  businessName    String?
+  isShopify       Boolean         @default(false)
+  status          String          // success, error
+  errorMessage    String?
+  headers         Json?
+  sessionId       String
+  session         CrawlSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  createdAt       DateTime        @default(now())
+  
+  @@index([domain])
+  @@index([sessionId])
+  @@index([isShopify])
+}
+
+model ScheduledCrawl {
+  id              String          @id @default(cuid())
+  name            String
+  sourceUrl       String?         // URL to fetch domains from
+  domains         String[]        // Array of domains to crawl
+  schedule        String          // Cron expression
+  isActive        Boolean         @default(true)
+  lastRun         DateTime?
+  nextRun         DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
