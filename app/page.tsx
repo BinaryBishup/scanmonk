@@ -166,7 +166,7 @@ export default function HomePage() {
                     
                     {/* Companies Section */}
                     <CommandGroup heading="Companies">
-                      {searchSuggestions[0].items.map((company) => (
+                      {searchSuggestions[0].items.map((company: any) => (
                         <CommandItem
                           key={company.url}
                           value={company.name}
@@ -198,7 +198,7 @@ export default function HomePage() {
 
                     {/* Categories Section */}
                     <CommandGroup heading="Categories">
-                      {searchSuggestions[1].items.map((category) => (
+                      {searchSuggestions[1].items.map((category: any) => (
                         <CommandItem
                           key={category.name}
                           value={category.name}
