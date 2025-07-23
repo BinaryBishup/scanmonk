@@ -122,17 +122,19 @@ DATABASE_URL="postgresql://localhost:5432/scanmonk"
 
 ### Setting up Cron Jobs
 
-The application includes a cron job that runs every 6 hours. To customize:
+The application includes a daily cron job. To customize:
 
 1. Edit `vercel.json`:
    ```json
    {
      "crons": [{
        "path": "/api/cron/crawler",
-       "schedule": "0 */6 * * *"  // Runs every 6 hours
+       "schedule": "0 0 * * *"  // Runs daily at midnight UTC
      }]
    }
    ```
+   
+   Note: Hobby accounts on Vercel are limited to daily cron jobs. Upgrade to Pro for more frequent scheduling.
 
 2. Set `CRON_SECRET` in Vercel environment variables
 

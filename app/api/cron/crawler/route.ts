@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // Vercel cron job to run scheduled crawls
-// Add to vercel.json: { "crons": [{ "path": "/api/cron/crawler", "schedule": "0 */6 * * *" }] }
+// Add to vercel.json: { "crons": [{ "path": "/api/cron/crawler", "schedule": "0 0 * * *" }] }
+// Note: Runs daily at midnight UTC (Hobby accounts limited to daily cron jobs)
 export async function GET(request: NextRequest) {
   try {
     // Check if this is from Vercel Cron
