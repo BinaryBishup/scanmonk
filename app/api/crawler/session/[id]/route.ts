@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma'
 // Get session details with results
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await prisma.crawlSession.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         results: {
           orderBy: { createdAt: 'desc' },
@@ -37,13 +38,14 @@ export async function GET(
 // Update session status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const { status } = await request.json()
     
     const session = await prisma.crawlSession.update({
-      where: { id: params.id },
+      where: { id },
       data: { status }
     })
     
